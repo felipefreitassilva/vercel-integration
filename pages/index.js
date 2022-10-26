@@ -2,7 +2,9 @@ import Head from 'next/head'
 import clientPromise from '../lib/mongodb'
 import { InferGetServerSidePropsType } from 'next'
 
-export async function getServerSideProps(context: any) {
+import { useEffect, useState } from 'react'
+
+export async function getServerSideProps(context) {
 	try {
 		await clientPromise
 		// `await clientPromise` will use the default database passed in the MONGODB_URI
@@ -27,7 +29,17 @@ export async function getServerSideProps(context: any) {
 
 export default function Home({
 	isConnected,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+}) {
+	const [restaurants, setRestaurants] = useState([])
+
+	useEffect(() => {
+		(async () => {
+			const results = await fetch('/api/list')
+			const resultsJson = await results.json()
+			setRestaurants(resultsJson)
+		})()
+	}, [])
+
 	return (
 		<div className='container'>
 			<Head>
@@ -40,6 +52,14 @@ export default function Home({
 					Welcome to{' '}
 					<a href='https://nextjs.org'>Next.js with MongoDB!</a>
 				</h1>
+				<div className='grid'>
+					{restaurants.map((restaurant) => (
+						<div className='card' key={restaurant._id}>
+							<h2>{restaurant.name}</h2>
+							<p>{restaurant.cuisine}</p>
+						</div>
+					))}
+				</div>
 
 				{isConnected ? (
 					<h2 className='subtitle'>You are connected to MongoDB</h2>
